@@ -15,6 +15,8 @@ from data.dataloader import GetData
 from loss.InpaintingLoss import InpaintingLossWithGAN
 from models.LBAMModel import LBAMModel, VGG16FeatureExtractor
 
+import pdb
+
 torch.set_num_threads(5)
 
 
@@ -38,7 +40,7 @@ parser.add_argument('--pretrained',type=str, default='', help='pretrained models
 parser.add_argument('--train_epochs', type=int, default=500, help='training epochs')
 args = parser.parse_args()
 
-
+pdb.set_trace()
 
 cuda = torch.cuda.is_available()
 if cuda:
@@ -85,6 +87,9 @@ G_optimizer = optim.Adam(netG.parameters(), lr=0.0001, betas=(0.5, 0.9))
 
 criterion = InpaintingLossWithGAN(args.logPath, VGG16FeatureExtractor(), lr=0.00001, betasInit=(0.0, 0.9), Lamda=10.0)
 
+# pdb.set_trace()
+
+
 if cuda:
     criterion = criterion.cuda()
 
@@ -92,6 +97,8 @@ if cuda:
         criterion = nn.DataParallel(criterion, device_ids=range(numOfGPUs))
 
 print('OK!')
+
+# pdb.set_trace()
 
 for i in range(1, num_epochs + 1):
     netG.train()

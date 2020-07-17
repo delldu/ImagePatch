@@ -3,6 +3,8 @@ import torch
 from torch.nn.parameter import Parameter
 from torch import nn
 from torchvision import models
+import pdb
+
 
 # asymmetric gaussian shaped activation function g_A 
 class GaussActivation(nn.Module):
@@ -14,8 +16,12 @@ class GaussActivation(nn.Module):
         self.sigma1 = Parameter(torch.tensor(sigma1, dtype=torch.float32))
         self.sigma2 = Parameter(torch.tensor(sigma2, dtype=torch.float32))
 
+        # pdb.set_trace()
+
     
     def forward(self, inputFeatures):
+
+        # pdb.set_trace()
 
         self.a.data = torch.clamp(self.a.data, 1.01, 6.0)
         self.mu.data = torch.clamp(self.mu.data, 0.1, 3.0)
@@ -25,6 +31,8 @@ class GaussActivation(nn.Module):
         lowerThanMu = inputFeatures < self.mu
         largerThanMu = inputFeatures >= self.mu
 
+        # pdb.set_trace()
+
         leftValuesActiv = self.a * torch.exp(- self.sigma1 * ( (inputFeatures - self.mu) ** 2 ) )
         leftValuesActiv.masked_fill_(largerThanMu, 0.0)
 
@@ -32,6 +40,8 @@ class GaussActivation(nn.Module):
         rightValueActiv.masked_fill_(lowerThanMu, 0.0)
 
         output = leftValuesActiv + rightValueActiv
+
+        # pdb.set_trace()
 
         return output
 

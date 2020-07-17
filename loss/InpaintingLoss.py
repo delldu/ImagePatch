@@ -4,6 +4,8 @@ from torch import autograd
 from tensorboardX import SummaryWriter
 from models.discriminator import DiscriminatorDoubleColumn
 
+import pdb
+
 # modified from WGAN-GP
 def calc_gradient_penalty(netD, real_data, fake_data, masks, cuda, Lambda):
     BATCH_SIZE = real_data.size()[0]
@@ -29,6 +31,9 @@ def calc_gradient_penalty(netD, real_data, fake_data, masks, cuda, Lambda):
 
     gradients = gradients.view(gradients.size(0), -1)                              
     gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * Lambda
+
+    # pdb.set_trace()
+
     return gradient_penalty.sum().mean()
 
 
@@ -38,6 +43,8 @@ def gram_matrix(feat):
     feat = feat.view(b, ch, h * w)
     feat_t = feat.transpose(1, 2)
     gram = torch.bmm(feat, feat_t) / (ch * h * w)
+    pdb.set_trace()
+
     return gram
 
 
@@ -46,6 +53,9 @@ def total_variation_loss(image):
     # shift one pixel and get difference (for both x and y direction)
     loss = torch.mean(torch.abs(image[:, :, :, :-1] - image[:, :, :, 1:])) + \
         torch.mean(torch.abs(image[:, :, :-1, :] - image[:, :, 1:, :]))
+
+    # pdb.set_trace()
+
     return loss
 
 
@@ -64,6 +74,9 @@ class InpaintingLossWithGAN(nn.Module):
             self.discriminator = nn.DataParallel(self.discriminator, device_ids=range(self.numOfGPUs)) """
         self.lamda = Lamda
         self.writer = SummaryWriter(logPath)
+
+        # pdb.set_trace()
+
 
     def forward(self, input, mask, output, gt, count, epoch):
         self.discriminator.zero_grad()
@@ -118,5 +131,8 @@ class InpaintingLossWithGAN(nn.Module):
         self.writer.add_scalar('LossStyle/style loss', styleLoss.item(), count)    
 
         GLoss = holeLoss + validAreaLoss + prcLoss + styleLoss + 0.1 * D_fake
-        self.writer.add_scalar('Generator/Joint loss', GLoss.item(), count)    
+        self.writer.add_scalar('Generator/Joint loss', GLoss.item(), count)
+
+        # pdb.set_trace()
+
         return GLoss.sum()

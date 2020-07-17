@@ -45,7 +45,6 @@ Here are some inpainting results that we train with batch size of 10 on Paris St
  <tr>
   <th><B>Input</B></th> <th><B>Results</B></th> <th><B>Ground-Truth</B></th>
  </tr>
-
 <tr>
     <td>
      <img src="./figs/results/input/input_001.png">
@@ -56,9 +55,7 @@ Here are some inpainting results that we train with batch size of 10 on Paris St
     <td>
      <img src="./figs/results/GT/GT_001.png">
     </td>
-
 </tr>
-
 <tr>
     <td>
      <img src="./figs/results/input/input_002.png">
@@ -69,9 +66,7 @@ Here are some inpainting results that we train with batch size of 10 on Paris St
     <td>
      <img src="./figs/results/GT/GT_002.png">
     </td>
-
 </tr>
-
 <tr>
     <td>
      <img src="./figs/results/input/input_003.png">
@@ -82,9 +77,7 @@ Here are some inpainting results that we train with batch size of 10 on Paris St
     <td>
      <img src="./figs/results/GT/GT_003.png">
     </td>
-
 </tr>
-
 <tr>
     <td>
      <img src="./figs/results/input/input_004.png">
@@ -95,9 +88,7 @@ Here are some inpainting results that we train with batch size of 10 on Paris St
     <td>
      <img src="./figs/results/GT/GT_004.png">
     </td>
-
 </tr>
-
 <tr>
     <td>
      <img src="./figs/results/input/input_005.png">
@@ -108,10 +99,7 @@ Here are some inpainting results that we train with batch size of 10 on Paris St
     <td>
      <img src="./figs/results/GT/GT_005.png">
     </td>
-
 </tr>
-
-
 </table>
 
 

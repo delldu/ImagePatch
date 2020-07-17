@@ -3,6 +3,7 @@ import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
 
+import pdb
 
 def gaussian(window_size, sigma):
     gauss = torch.Tensor([exp(-(x - window_size // 2) ** 2 / float(2 * sigma ** 2)) for x in range(window_size)])
@@ -47,6 +48,8 @@ class SSIM(torch.nn.Module):
         self.channel = 1
         self.window = create_window(window_size, self.channel)
 
+        # pdb.set_trace()
+
     def forward(self, img1, img2):
         (_, channel, _, _) = img1.size()
 
@@ -61,6 +64,8 @@ class SSIM(torch.nn.Module):
 
             self.window = window
             self.channel = channel
+
+        # pdb.set_trace()
 
         return _ssim(img1, img2, window, self.window_size, channel, self.size_average)
 

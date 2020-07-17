@@ -1,10 +1,13 @@
 import torch
 import torch.nn as nn
+import pdb
 
 # weight initial strategies
 def weights_init(init_type='gaussian'):
     def init_fun(m):
         classname = m.__class__.__name__
+
+        # pdb.set_trace()
 
         if (classname.find('Conv') == 0 or classname.find('Linear') == 0 ) and hasattr(m, 'weight'):
             if (init_type == 'gaussian'):

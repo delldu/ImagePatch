@@ -14,6 +14,8 @@ import pytorch_ssim
 from PIL import Image
 from torchvision.transforms import Compose, ToTensor, Resize, ToPILImage
 
+import pdb
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--numOfWorkers', type=int, default=4,
@@ -48,6 +50,7 @@ savePath = args.savePath
 if not os.path.exists(savePath):
     os.makedirs(savePath)
 
+# pdb.set_trace()
 
 imgData = GetData(dataRoot, maskRoot, loadSize, cropSize)
 data_loader = DataLoader(imgData, batch_size=batchSize, shuffle=True, num_workers=args.numOfWorkers, drop_last=False)

@@ -4,6 +4,7 @@ from torch import nn
 from models.ActivationFunction import GaussActivation, MaskUpdate
 from models.weightInitial import weights_init
 
+import pdb
 
 # learnable reverse attention conv
 class ReverseMaskConv(nn.Module):
@@ -18,6 +19,8 @@ class ReverseMaskConv(nn.Module):
 
         self.activationFuncG_A = GaussActivation(1.1, 1.0, 0.5, 0.5)
         self.updateMask = MaskUpdate(0.8)
+
+        # pdb.set_trace()
     
     def forward(self, inputMasks):
         maskFeatures = self.reverseMaskConv(inputMasks)
@@ -26,6 +29,8 @@ class ReverseMaskConv(nn.Module):
 
         maskUpdate = self.updateMask(maskFeatures)
 
+        # pdb.set_trace()
+
         return maskActiv, maskUpdate
 
 # learnable reverse attention layer, including features activation and batchnorm
@@ -33,6 +38,8 @@ class ReverseAttention(nn.Module):
     def __init__(self, inputChannels, outputChannels, bn=False, activ='leaky', \
         kernelSize=4, stride=2, padding=1, outPadding=0,dilation=1, groups=1,convBias=False, bnChannels=512):
         super(ReverseAttention, self).__init__()
+
+        # pdb.set_trace()
 
         self.conv = nn.ConvTranspose2d(inputChannels, outputChannels, kernel_size=kernelSize, \
             stride=stride, padding=padding, output_padding=outPadding, dilation=dilation, groups=groups,bias=convBias)
@@ -54,8 +61,12 @@ class ReverseAttention(nn.Module):
             self.activ = nn.PReLU()
         else:
             pass
+        # pdb.set_trace()
+
 
     def forward(self, ecFeaturesSkip, dcFeatures, maskFeaturesForAttention):
+        # pdb.set_trace()
+
         nextDcFeatures = self.conv(dcFeatures)
         
         # note that encoder features are ahead, it's important tor make forward attention map ahead 
@@ -68,5 +79,7 @@ class ReverseAttention(nn.Module):
             outputFeatures = self.bn(outputFeatures)
         if hasattr(self, 'activ'):
             outputFeatures = self.activ(outputFeatures)
+
+        # pdb.set_trace()
 
         return outputFeatures

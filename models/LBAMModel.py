@@ -5,6 +5,8 @@ from models.forwardAttentionLayer import ForwardAttention
 from models.reverseAttentionLayer import ReverseAttention, ReverseMaskConv
 from models.weightInitial import weights_init
 
+import pdb
+
 #VGG16 feature extract
 class VGG16FeatureExtractor(nn.Module):
     def __init__(self):
@@ -20,11 +22,16 @@ class VGG16FeatureExtractor(nn.Module):
             for param in getattr(self, 'enc_{:d}'.format(i + 1)).parameters():
                 param.requires_grad = False
 
+        # pdb.set_trace()
+
     def forward(self, image):
         results = [image]
         for i in range(3):
             func = getattr(self, 'enc_{:d}'.format(i + 1))
             results.append(func(results[-1]))
+
+        # pdb.set_trace()
+
         return results[1:]
 
 class LBAMModel(nn.Module):
@@ -59,6 +66,9 @@ class LBAMModel(nn.Module):
         self.dc7 = nn.ConvTranspose2d(64 * 2, outputChannels, kernel_size=4, stride=2, padding=1, bias=False)
 
         self.tanh = nn.Tanh()
+
+        # pdb.set_trace()
+
 
     def forward(self, inputImgs, masks):
         ef1, mu1, skipConnect1, forwardMap1 = self.ec1(inputImgs, masks)
@@ -98,5 +108,8 @@ class LBAMModel(nn.Module):
         dcFeatures7 = self.dc7(dcFeatures6)
 
         output = (self.tanh(dcFeatures7) + 1) / 2
+
+        # pdb.set_trace()
+
 
         return output

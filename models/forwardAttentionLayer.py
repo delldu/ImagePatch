@@ -4,6 +4,8 @@ from torch import nn
 from models.ActivationFunction import GaussActivation, MaskUpdate
 from models.weightInitial import weights_init
 
+import pdb
+
 # learnable forward attention conv layer
 class ForwardAttentionLayer(nn.Module):
     def __init__(self, inputChannels, outputChannels, kernelSize, stride, 
@@ -26,6 +28,8 @@ class ForwardAttentionLayer(nn.Module):
         self.activationFuncG_A = GaussActivation(1.1, 2.0, 1.0, 1.0)
         self.updateMask = MaskUpdate(0.8)
 
+        # pdb.set_trace()
+
     def forward(self, inputFeatures, inputMasks):
         convFeatures = self.conv(inputFeatures)
         maskFeatures = self.maskConv(inputMasks)
@@ -35,6 +39,8 @@ class ForwardAttentionLayer(nn.Module):
         convOut = convFeatures * maskActiv
 
         maskUpdate = self.updateMask(maskFeatures)
+
+        # pdb.set_trace()
 
         return convOut, maskUpdate, convFeatures, maskActiv
 
@@ -70,13 +76,20 @@ class ForwardAttention(nn.Module):
             self.activ = nn.PReLU()
         else:
             pass
+
+        #pdb.set_trace()
+
     
     def forward(self, inputFeatures, inputMasks):
+        #pdb.set_trace()
+
         features, maskUpdated, convPreF, maskActiv = self.conv(inputFeatures, inputMasks)
 
         if hasattr(self, 'bn'):
             features = self.bn(features)
         if hasattr(self, 'activ'):
             features = self.activ(features)
+
+        # pdb.set_trace()
         
         return features, maskUpdated, convPreF, maskActiv

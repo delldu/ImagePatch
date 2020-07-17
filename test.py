@@ -10,6 +10,9 @@ from models.LBAMModel import LBAMModel
 from PIL import Image
 from torchvision.transforms import Compose, ToTensor, Resize, ToPILImage
 from data.basicFunction import CheckImageFile
+
+import pdb
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--input', type=str, default='', help='input damaged image')
 parser.add_argument('--mask', type=str, default='', help='input mask')
@@ -17,11 +20,12 @@ parser.add_argument('--output', type=str, default='output', help='output file na
 parser.add_argument('--pretrained', type=str, default='', help='load pretrained model')
 parser.add_argument('--loadSize', type=int, default=350,
                     help='image loading size')
-parser.add_argument('--cropSize', type=int, default=256,
+parser.add_argument('--cropSize', type=int, default=1024,
                     help='image training size')
 
 args = parser.parse_args()
 
+# pdb.set_trace()
 
 ImageTransform = Compose([
     Resize(size=args.cropSize, interpolation=Image.NEAREST),
@@ -47,6 +51,8 @@ else:
     ones = mask >= threshhold
     zeros = mask < threshhold
 
+    #pdb.set_trace()
+
     mask.masked_fill_(ones, 1.0)
     mask.masked_fill_(zeros, 0.0)
 
@@ -60,6 +66,8 @@ else:
     
     mask = mask.view(1, sizes[0], sizes[1], sizes[2])
     
+    #pdb.set_trace()
+
     netG = LBAMModel(4, 3)
 
     netG.load_state_dict(torch.load(args.pretrained))
@@ -67,6 +75,9 @@ else:
         param.requires_grad = False
     netG.eval()
     print(netG.reverseConv5.updateMask.alpha)
+
+    #pdb.set_trace()
+
     if torch.cuda.is_available():
         netG = netG.cuda()
         inputImage = inputImage.cuda()
@@ -76,3 +87,6 @@ else:
     output = output * (1 - mask) + inputImage[:, 0:3, :, :] * mask
 
     save_image(output, args.output + '.png')
+
+    # pdb.set_trace()
+

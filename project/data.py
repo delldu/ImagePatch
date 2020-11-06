@@ -16,6 +16,7 @@ from PIL import Image
 import torch.utils.data as data
 import torchvision.transforms as T
 import torchvision.utils as utils
+import pdb
 
 train_dataset_rootdir = "dataset/train/"
 test_dataset_rootdir = "dataset/test/"
@@ -30,6 +31,18 @@ def get_transform(train=True):
 
     ts.append(T.ToTensor())
     return T.Compose(ts)
+
+def image_with_mask(image, mask):
+    """image, mask: NX3xHxW."""
+    threshhold = 0.5
+    ones = mask >= threshhold
+    zeros = mask < threshhold
+    mask.masked_fill_(ones, 1.0)
+    mask.masked_fill_(zeros, 0.0)
+    mask = 1 - mask
+    image = image * mask
+    image = torch.cat((image, mask[:, 0:1, :, :]), 1)
+    return image, mask
 
 class ImagePatchDataset(data.Dataset):
     """Define dataset."""

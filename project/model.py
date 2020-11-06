@@ -19,8 +19,15 @@ from torch.nn.parameter import Parameter
 
 from tqdm import tqdm
 from torchvision import models
+from data import image_with_mask
 
 import pdb
+
+def PSNR(img1, img2):
+    """PSNR."""
+    difference = (1.*img1-img2)**2
+    mse = torch.sqrt(torch.mean(difference)) + 0.000001
+    return 20*torch.log10(1./mse)
 
 # The following comes from https://github.com/Vious/LBAM_Pytorch
 # Image Inpainting With Learnable Bidirectional Attention Maps
@@ -617,20 +624,21 @@ def valid_epoch(loader, model, device, tag=''):
         t.set_description(tag)
 
         for data in loader:
-            images, targets = data
+            images, masks = data
             count = len(images)
 
             # Transform data to device
             images = images.to(device)
-            targets = targets.to(device)
+            masks = masks.to(device)
 
             # Predict results without calculating gradients
+            new_images, masks = image_with_mask(images, masks)
             with torch.no_grad():
-                predicts = model(images)
+                predicts = model(new_images, masks)
 
-            # xxxx--modify here
+            loss_value = PSNR(predicts, images)
             valid_loss.update(loss_value, count)
-            t.set_postfix(loss='{:.6f}'.format(valid_loss.avg))
+            t.set_postfix(loss='PSNR: {:.6f}'.format(valid_loss.avg))
             t.update(count)
 
 

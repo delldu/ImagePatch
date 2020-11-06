@@ -21,7 +21,7 @@ if __name__ == "__main__":
     model_setenv()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--checkpoint', type=str, default="output/ImagePatch.pth", help="checkpoint file")
+    parser.add_argument('--checkpoint', type=str, default="models/ImagePatch.pth", help="checkpoint file")
     parser.add_argument('--bs', type=int, default=2, help="batch size")
     args = parser.parse_args()
 

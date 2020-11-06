@@ -16,7 +16,9 @@ import torch
 import torchvision.transforms as transforms
 from PIL import Image
 from model import get_model, model_load, model_setenv
+from data import image_with_mask
 from tqdm import tqdm
+import pdb
 
 if __name__ == "__main__":
     """Predict."""
@@ -24,8 +26,8 @@ if __name__ == "__main__":
     model_setenv()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--checkpoint', type=str, default="output/ImagePatch.pth", help="checkpint file")
-    parser.add_argument('--input', type=str, required=True, help="input image")
+    parser.add_argument('--checkpoint', type=str, default="models/ImagePatch.pth", help="checkpint file")
+    parser.add_argument('--input', type=str, default="dataset/predict/image/*.png", help="input image")
     args = parser.parse_args()
 
     # CPU or GPU ?
@@ -37,7 +39,8 @@ if __name__ == "__main__":
     model.eval()
 
     if os.environ["ENABLE_APEX"] == "YES":
-        model, = amp.initialize(model, opt_level="O1")
+        from apex import amp
+        model = amp.initialize(model, opt_level="O1")
 
     totensor = transforms.ToTensor()
     toimage = transforms.ToPILImage()
@@ -48,11 +51,21 @@ if __name__ == "__main__":
     for index, filename in enumerate(image_filenames):
         progress_bar.update(1)
 
+        # image
         image = Image.open(filename).convert("RGB")
         input_tensor = totensor(image).unsqueeze(0).to(device)
 
-        with torch.no_grad():
-            output_tensor = model(input_tensor).clamp(0, 1.0).squeeze()
+        # mask
+        mask_filename = os.path.dirname(os.path.dirname(filename)) \
+            + "/mask/" + os.path.basename(filename)
+        mask_image = Image.open(mask_filename).convert("RGB")
+        mask_tensor = totensor(mask_image).unsqueeze(0).to(device)
 
-        # xxxx--modify here
-        toimage(output_tensor.cpu()).show()
+        input_tensor, mask_tensor = image_with_mask(input_tensor, mask_tensor)
+        with torch.no_grad():
+            output_tensor = model(input_tensor, mask_tensor)
+
+        output_tensor = output_tensor.clamp(0, 1.0).squeeze()
+        output_filename = os.path.dirname(os.path.dirname(filename)) \
+            + "/output/" + os.path.basename(filename)
+        toimage(output_tensor.cpu()).save(output_filename)

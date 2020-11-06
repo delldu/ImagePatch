@@ -1,0 +1,20 @@
+.
+├── data.py
+├── dataset
+│   ├── predict
+│   │   ├── image
+│   │   ├── mask
+│   │   └── output
+│   ├── test
+│   │   ├── image
+│   │   └── mask
+│   └── train
+│       ├── image
+│       └── mask
+├── model.py
+├── predict.py
+├── readme.md
+├── test.py
+└── train.py
+
+11 directories, 6 files

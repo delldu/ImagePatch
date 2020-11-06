@@ -51,7 +51,9 @@ else:
     ones = mask >= threshhold
     zeros = mask < threshhold
 
-    #pdb.set_trace()
+    # pdb.set_trace()
+    # (Pdb) pp image.size(), mask.size()
+    # (torch.Size([3, 1024, 1024]), torch.Size([3, 1024, 1024]))
 
     mask.masked_fill_(ones, 1.0)
     mask.masked_fill_(zeros, 0.0)
@@ -66,7 +68,7 @@ else:
     
     mask = mask.view(1, sizes[0], sizes[1], sizes[2])
     
-    #pdb.set_trace()
+    # pdb.set_trace()
 
     netG = LBAMModel(4, 3)
 
@@ -76,7 +78,7 @@ else:
     netG.eval()
     print(netG.reverseConv5.updateMask.alpha)
 
-    #pdb.set_trace()
+    print(netG)
 
     if torch.cuda.is_available():
         netG = netG.cuda()
@@ -84,7 +86,12 @@ else:
         mask = mask.cuda()
     
     output = netG(inputImage, mask)
-    output = output * (1 - mask) + inputImage[:, 0:3, :, :] * mask
+    # (Pdb) output.size()
+    # torch.Size([1, 3, 1024, 1024])
+
+    save_image(inputImage[:, 0:3, :, :] * mask, args.output + "_orig.png")
+
+    # output = output * (1 - mask) + inputImage[:, 0:3, :, :] * mask
 
     save_image(output, args.output + '.png')
 

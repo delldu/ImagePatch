@@ -17,15 +17,16 @@ import torch.utils.data as data
 import torchvision.transforms as T
 import torchvision.utils as utils
 
-# xxxx--modify here
 train_dataset_rootdir = "dataset/train/"
 test_dataset_rootdir = "dataset/test/"
 
 def get_transform(train=True):
     """Transform images."""
     ts = []
-    # if train:
-    #     ts.append(T.RandomHorizontalFlip(0.5))
+    if train:
+        loadSize = 512
+        ts.append(T.Resize(size=loadSize, interpolation=Image.BICUBIC))
+    #   ts.append(T.RandomHorizontalFlip(0.5))
 
     ts.append(T.ToTensor())
     return T.Compose(ts)
@@ -41,18 +42,19 @@ class ImagePatchDataset(data.Dataset):
         self.transforms = transforms
 
         # load all images, sorting for alignment
-        # xxxx--modify here
-        self.images = list(sorted(os.listdir(root)))
+        self.images = list(sorted(os.listdir(root + "/image")))
 
     def __getitem__(self, idx):
         """Load images."""
-        img_path = os.path.join(self.root, self.images[idx])
-        img = Image.open(img_path).convert("RGB")
-
+        image_path = os.path.join(self.root + "/image", self.images[idx])
+        image = Image.open(image_path).convert("RGB")
+        mask_path = os.path.join(self.root + "/mask", self.images[idx])
+        mask = Image.open(mask_path).convert("RGB")
         if self.transforms is not None:
-            img = self.transforms(img)
+            image = self.transforms(image)
+            mask = self.transforms(mask)
 
-        return img
+        return image, mask
 
     def __len__(self):
         """Return total numbers of images."""
@@ -76,7 +78,6 @@ def train_data(bs):
     print(train_ds)
 
     # Split train_ds in train and valid set
-    # xxxx--modify here
     valid_len = int(0.2 * len(train_ds))
     indices = [i for i in range(len(train_ds) - valid_len, len(train_ds))]
 

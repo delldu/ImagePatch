@@ -3,7 +3,9 @@ import torch.nn as nn
 from torchvision import models
 from models.forwardAttentionLayer import ForwardAttention
 from models.reverseAttentionLayer import ReverseAttention, ReverseMaskConv
-from models.weightInitial import weights_init
+
+# https://github.com/Vious/LBAM_Pytorch
+# Image Inpainting With Learnable Bidirectional Attention Maps
 
 import pdb
 
@@ -22,7 +24,7 @@ class VGG16FeatureExtractor(nn.Module):
             for param in getattr(self, 'enc_{:d}'.format(i + 1)).parameters():
                 param.requires_grad = False
 
-        # pdb.set_trace()
+        pdb.set_trace()
 
     def forward(self, image):
         results = [image]
@@ -30,7 +32,7 @@ class VGG16FeatureExtractor(nn.Module):
             func = getattr(self, 'enc_{:d}'.format(i + 1))
             results.append(func(results[-1]))
 
-        # pdb.set_trace()
+        pdb.set_trace()
 
         return results[1:]
 
@@ -68,9 +70,15 @@ class LBAMModel(nn.Module):
         self.tanh = nn.Tanh()
 
         # pdb.set_trace()
+        # inputChannels = 4
+        # outputChannels = 3
 
 
     def forward(self, inputImgs, masks):
+        # pdb.set_trace()
+        # (Pdb) pp inputImgs.size(), masks.size()
+        # (torch.Size([1, 4, 1024, 1024]), torch.Size([1, 3, 1024, 1024]))
+
         ef1, mu1, skipConnect1, forwardMap1 = self.ec1(inputImgs, masks)
         ef2, mu2, skipConnect2, forwardMap2 = self.ec2(ef1, mu1)
         ef3, mu3, skipConnect3, forwardMap3 = self.ec3(ef2, mu2)
@@ -110,6 +118,7 @@ class LBAMModel(nn.Module):
         output = (self.tanh(dcFeatures7) + 1) / 2
 
         # pdb.set_trace()
-
+        # (Pdb) pp output.size()
+        # torch.Size([1, 3, 1024, 1024])
 
         return output

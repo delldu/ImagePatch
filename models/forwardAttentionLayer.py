@@ -28,7 +28,7 @@ class ForwardAttentionLayer(nn.Module):
         self.activationFuncG_A = GaussActivation(1.1, 2.0, 1.0, 1.0)
         self.updateMask = MaskUpdate(0.8)
 
-        # pdb.set_trace()
+        pdb.set_trace()
 
     def forward(self, inputFeatures, inputMasks):
         convFeatures = self.conv(inputFeatures)
@@ -40,7 +40,7 @@ class ForwardAttentionLayer(nn.Module):
 
         maskUpdate = self.updateMask(maskFeatures)
 
-        # pdb.set_trace()
+        pdb.set_trace()
 
         return convOut, maskUpdate, convFeatures, maskActiv
 
@@ -77,7 +77,7 @@ class ForwardAttention(nn.Module):
         else:
             pass
 
-        #pdb.set_trace()
+        pdb.set_trace()
 
     
     def forward(self, inputFeatures, inputMasks):
@@ -90,6 +90,6 @@ class ForwardAttention(nn.Module):
         if hasattr(self, 'activ'):
             features = self.activ(features)
 
-        # pdb.set_trace()
+        pdb.set_trace()
         
         return features, maskUpdated, convPreF, maskActiv

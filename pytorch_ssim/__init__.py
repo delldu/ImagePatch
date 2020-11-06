@@ -65,7 +65,7 @@ class SSIM(torch.nn.Module):
             self.window = window
             self.channel = channel
 
-        # pdb.set_trace()
+        pdb.set_trace()
 
         return _ssim(img1, img2, window, self.window_size, channel, self.size_average)
 

@@ -632,9 +632,9 @@ def valid_epoch(loader, model, device, tag=''):
             masks = masks.to(device)
 
             # Predict results without calculating gradients
-            new_images, masks = image_with_mask(images, masks)
+            new_images, new_masks = image_with_mask(images, masks)
             with torch.no_grad():
-                predicts = model(new_images, masks)
+                predicts = model(new_images, new_masks)
 
             loss_value = PSNR(predicts, images)
             valid_loss.update(loss_value, count)
@@ -689,33 +689,7 @@ def model_setenv():
     print("  ONLY_USE_CPU: ", os.environ["ONLY_USE_CPU"])
     print("  ENABLE_APEX: ", os.environ["ENABLE_APEX"])
 
-
-def infer_perform():
-    """Model infer performance ..."""
-
-    model_setenv()
-    device = os.environ["DEVICE"]
-
-    model = ImagePatchModel()
-    model.eval()
-    model = model.to(device)
-
-    if os.environ["ENABLE_APEX"] == "YES":
-        from apex import amp
-        model = amp.initialize(model, opt_level="O1")
-    print(model)
-
-    # for i in tqdm(range(10)):
-    #     input = torch.randn(2, 3, 512, 512)
-    #     input = input.to(device)
-
-    #     with torch.no_grad():
-    #         output = model(input)
-
-    #     del input, output
-
 if __name__ == '__main__':
     """Test model ..."""
 
     # model_export()
-    infer_perform()

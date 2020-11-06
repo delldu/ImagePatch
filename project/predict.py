@@ -61,9 +61,9 @@ if __name__ == "__main__":
         mask_image = Image.open(mask_filename).convert("RGB")
         mask_tensor = totensor(mask_image).unsqueeze(0).to(device)
 
-        input_tensor, mask_tensor = image_with_mask(input_tensor, mask_tensor)
+        new_input_tensor, new_mask_tensor = image_with_mask(input_tensor, mask_tensor)
         with torch.no_grad():
-            output_tensor = model(input_tensor, mask_tensor)
+            output_tensor = model(new_input_tensor, new_mask_tensor)
 
         output_tensor = output_tensor.clamp(0, 1.0).squeeze()
         output_filename = os.path.dirname(os.path.dirname(filename)) \

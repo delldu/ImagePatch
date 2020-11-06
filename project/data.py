@@ -108,7 +108,7 @@ def test_data(bs):
     """Get data loader for test, bs means batch_size."""
 
     test_ds = ImagePatchDataset(test_dataset_rootdir, get_transform(train=False))
-    test_dl = data.DataLoader(test_ds, batch_size=bs * 2, shuffle=False, num_workers=4)
+    test_dl = data.DataLoader(test_ds, batch_size=bs*2, shuffle=False, num_workers=4)
 
     return test_dl
 

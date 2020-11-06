@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--checkpoint', type=str, default="models/ImagePatch.pth", help="checkpoint file")
-    parser.add_argument('--bs', type=int, default=2, help="batch size")
+    parser.add_argument('--bs', type=int, default=16, help="batch size")
     args = parser.parse_args()
 
     # CPU or GPU ?

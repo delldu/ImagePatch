@@ -10,19 +10,20 @@
 # ************************************************************************************/
 #
 
-import os
-import sys
 import math
+import os
+import pdb
+import sys
+
 import torch
 import torch.nn as nn
 from torch import autograd
 from torch.nn.parameter import Parameter
-
-from tqdm import tqdm
 from torchvision import models
+from tqdm import tqdm
+
 from data import image_with_mask
 
-import pdb
 
 def PSNR(img1, img2):
     """PSNR."""
@@ -34,14 +35,15 @@ def PSNR(img1, img2):
 # Image Inpainting With Learnable Bidirectional Attention Maps
 # Thanks authors a lot.
 
+
 class ImagePatchModel(nn.Module):
     """ImagePatch Model."""
 
-    def __init__(self, inputChannels = 4, outputChannels = 3):
+    def __init__(self, inputChannels=4, outputChannels=3):
         """Init model."""
         super(ImagePatchModel, self).__init__()
 
-        # default kernel is of size 4X4, stride 2, padding 1, 
+        # default kernel is of size 4X4, stride 2, padding 1,
         # and the use of biases are set false in default ReverseAttention class.
         self.ec1 = ForwardAttention(inputChannels, 64, bn=False)
         self.ec2 = ForwardAttention(64, 128)
@@ -51,7 +53,7 @@ class ImagePatchModel(nn.Module):
         for i in range(5, 8):
             name = 'ec{:d}'.format(i)
             setattr(self, name, ForwardAttention(512, 512))
-        
+
         # reverse mask conv
         self.reverseConv1 = ReverseMaskConv(3, 64)
         self.reverseConv2 = ReverseMaskConv(64, 128)
@@ -66,7 +68,8 @@ class ImagePatchModel(nn.Module):
         self.dc4 = ReverseAttention(512 * 2, 256, bnChannels=512)
         self.dc5 = ReverseAttention(256 * 2, 128, bnChannels=256)
         self.dc6 = ReverseAttention(128 * 2, 64, bnChannels=128)
-        self.dc7 = nn.ConvTranspose2d(64 * 2, outputChannels, kernel_size=4, stride=2, padding=1, bias=False)
+        self.dc7 = nn.ConvTranspose2d(
+            64 * 2, outputChannels, kernel_size=4, stride=2, padding=1, bias=False)
 
         self.tanh = nn.Tanh()
 
@@ -84,7 +87,6 @@ class ImagePatchModel(nn.Module):
         ef5, mu5, skipConnect5, forwardMap5 = self.ec5(ef4, mu4)
         ef6, mu6, skipConnect6, forwardMap6 = self.ec6(ef5, mu5)
         ef7, _, _, _ = self.ec7(ef6, mu6)
-
 
         reverseMap1, revMu1 = self.reverseConv1(1 - masks)
         reverseMap2, revMu2 = self.reverseConv2(revMu1)
@@ -130,7 +132,7 @@ def weights_init(init_type='gaussian'):
         # (Pdb) pp init_type
         # 'gaussian'
 
-        if (classname.find('Conv') == 0 or classname.find('Linear') == 0 ) and hasattr(m, 'weight'):
+        if (classname.find('Conv') == 0 or classname.find('Linear') == 0) and hasattr(m, 'weight'):
             if (init_type == 'gaussian'):
                 nn.init.normal_(m.weight, 0.0, 0.02)
             elif (init_type == 'xavier'):
@@ -160,7 +162,6 @@ class GaussActivation(nn.Module):
 
         # pdb.set_trace()
 
-    
     def forward(self, inputFeatures):
 
         # pdb.set_trace()
@@ -175,10 +176,13 @@ class GaussActivation(nn.Module):
 
         # pdb.set_trace()
 
-        leftValuesActiv = self.a * torch.exp(- self.sigma1 * ( (inputFeatures - self.mu) ** 2 ) )
+        leftValuesActiv = self.a * \
+            torch.exp(- self.sigma1 * ((inputFeatures - self.mu) ** 2))
         leftValuesActiv.masked_fill_(largerThanMu, 0.0)
 
-        rightValueActiv = 1 + (self.a - 1) * torch.exp(- self.sigma2 * ( (inputFeatures - self.mu) ** 2 ) )
+        rightValueActiv = 1 + \
+            (self.a - 1) * torch.exp(- self.sigma2 *
+                                     ((inputFeatures - self.mu) ** 2))
         rightValueActiv.masked_fill_(lowerThanMu, 0.0)
 
         output = leftValuesActiv + rightValueActiv
@@ -188,6 +192,8 @@ class GaussActivation(nn.Module):
         return output
 
 # mask updating functions, we recommand using alpha that is larger than 0 and lower than 1.0
+
+
 class MaskUpdate(nn.Module):
     def __init__(self, alpha):
         super(MaskUpdate, self).__init__()
@@ -195,6 +201,7 @@ class MaskUpdate(nn.Module):
         self.updateFunc = nn.ReLU(True)
         #self.alpha = Parameter(torch.tensor(alpha, dtype=torch.float32))
         self.alpha = alpha
+
     def forward(self, inputMaskMap):
         """ self.alpha.data = torch.clamp(self.alpha.data, 0.6, 0.8)
         print(self.alpha) """
@@ -202,27 +209,28 @@ class MaskUpdate(nn.Module):
         return torch.pow(self.updateFunc(inputMaskMap), self.alpha)
 
 # learnable forward attention conv layer
+
+
 class ForwardAttentionLayer(nn.Module):
-    def __init__(self, inputChannels, outputChannels, kernelSize, stride, 
-        padding, dilation=1, groups=1, bias=False):
+    def __init__(self, inputChannels, outputChannels, kernelSize, stride,
+                 padding, dilation=1, groups=1, bias=False):
         super(ForwardAttentionLayer, self).__init__()
 
-        self.conv = nn.Conv2d(inputChannels, outputChannels, kernelSize, stride, padding, dilation, \
-            groups, bias)
+        self.conv = nn.Conv2d(inputChannels, outputChannels, kernelSize, stride, padding, dilation,
+                              groups, bias)
 
         if inputChannels == 4:
-            self.maskConv = nn.Conv2d(3, outputChannels, kernelSize, stride, padding, dilation, \
-                groups, bias)
+            self.maskConv = nn.Conv2d(3, outputChannels, kernelSize, stride, padding, dilation,
+                                      groups, bias)
         else:
-            self.maskConv = nn.Conv2d(inputChannels, outputChannels, kernelSize, stride, padding, \
-                dilation, groups, bias)
-        
+            self.maskConv = nn.Conv2d(inputChannels, outputChannels, kernelSize, stride, padding,
+                                      dilation, groups, bias)
+
         self.conv.apply(weights_init())
         self.maskConv.apply(weights_init())
 
         self.activationFuncG_A = GaussActivation(1.1, 2.0, 1.0, 1.0)
         self.updateMask = MaskUpdate(0.8)
-
 
     def forward(self, inputFeatures, inputMasks):
         convFeatures = self.conv(inputFeatures)
@@ -237,25 +245,32 @@ class ForwardAttentionLayer(nn.Module):
         return convOut, maskUpdate, convFeatures, maskActiv
 
 # forward attention gather feature activation and batchnorm
+
+
 class ForwardAttention(nn.Module):
-    def __init__(self, inputChannels, outputChannels, bn=False, sample='down-4', \
-        activ='leaky', convBias=False):
+    def __init__(self, inputChannels, outputChannels, bn=False, sample='down-4',
+                 activ='leaky', convBias=False):
         super(ForwardAttention, self).__init__()
 
         if sample == 'down-4':
-            self.conv = ForwardAttentionLayer(inputChannels, outputChannels, 4, 2, 1, bias=convBias)
+            self.conv = ForwardAttentionLayer(
+                inputChannels, outputChannels, 4, 2, 1, bias=convBias)
         elif sample == 'down-5':
-            self.conv = ForwardAttentionLayer(inputChannels, outputChannels, 5, 2, 2, bias=convBias)
+            self.conv = ForwardAttentionLayer(
+                inputChannels, outputChannels, 5, 2, 2, bias=convBias)
         elif sample == 'down-7':
-            self.conv = ForwardAttentionLayer(inputChannels, outputChannels, 7, 2, 3, bias=convBias)
+            self.conv = ForwardAttentionLayer(
+                inputChannels, outputChannels, 7, 2, 3, bias=convBias)
         elif sample == 'down-3':
-            self.conv = ForwardAttentionLayer(inputChannels, outputChannels, 3, 2, 1, bias=convBias)
+            self.conv = ForwardAttentionLayer(
+                inputChannels, outputChannels, 3, 2, 1, bias=convBias)
         else:
-            self.conv = ForwardAttentionLayer(inputChannels, outputChannels, 3, 1, 1, bias=convBias)
-        
+            self.conv = ForwardAttentionLayer(
+                inputChannels, outputChannels, 3, 1, 1, bias=convBias)
+
         if bn:
             self.bn = nn.BatchNorm2d(outputChannels)
-        
+
         if activ == 'leaky':
             self.activ = nn.LeakyReLU(0.2, False)
         elif activ == 'relu':
@@ -268,11 +283,12 @@ class ForwardAttention(nn.Module):
             self.activ = nn.PReLU()
         else:
             pass
-    
-    def forward(self, inputFeatures, inputMasks):
-        #pdb.set_trace()
 
-        features, maskUpdated, convPreF, maskActiv = self.conv(inputFeatures, inputMasks)
+    def forward(self, inputFeatures, inputMasks):
+        # pdb.set_trace()
+
+        features, maskUpdated, convPreF, maskActiv = self.conv(
+            inputFeatures, inputMasks)
 
         if hasattr(self, 'bn'):
             features = self.bn(features)
@@ -283,12 +299,12 @@ class ForwardAttention(nn.Module):
 
 
 class ReverseMaskConv(nn.Module):
-    def __init__(self, inputChannels, outputChannels, kernelSize=4, stride=2, 
-        padding=1, dilation=1, groups=1, convBias=False):
+    def __init__(self, inputChannels, outputChannels, kernelSize=4, stride=2,
+                 padding=1, dilation=1, groups=1, convBias=False):
         super(ReverseMaskConv, self).__init__()
 
-        self.reverseMaskConv = nn.Conv2d(inputChannels, outputChannels, kernelSize, stride, padding, \
-            dilation, groups, bias=convBias)
+        self.reverseMaskConv = nn.Conv2d(inputChannels, outputChannels, kernelSize, stride, padding,
+                                         dilation, groups, bias=convBias)
 
         self.reverseMaskConv.apply(weights_init())
 
@@ -314,7 +330,6 @@ class ReverseMaskConv(nn.Module):
         # groups = 1
         # convBias = False
 
-    
     def forward(self, inputMasks):
         maskFeatures = self.reverseMaskConv(inputMasks)
 
@@ -331,9 +346,11 @@ class ReverseMaskConv(nn.Module):
         return maskActiv, maskUpdate
 
 # learnable reverse attention layer, including features activation and batchnorm
+
+
 class ReverseAttention(nn.Module):
-    def __init__(self, inputChannels, outputChannels, bn=False, activ='leaky', \
-        kernelSize=4, stride=2, padding=1, outPadding=0,dilation=1, groups=1,convBias=False, bnChannels=512):
+    def __init__(self, inputChannels, outputChannels, bn=False, activ='leaky',
+                 kernelSize=4, stride=2, padding=1, outPadding=0, dilation=1, groups=1, convBias=False, bnChannels=512):
         super(ReverseAttention, self).__init__()
 
         # pdb.set_trace()
@@ -352,14 +369,14 @@ class ReverseAttention(nn.Module):
         # convBias = False
         # bnChannels = 1024
 
-        self.conv = nn.ConvTranspose2d(inputChannels, outputChannels, kernel_size=kernelSize, \
-            stride=stride, padding=padding, output_padding=outPadding, dilation=dilation, groups=groups,bias=convBias)
-        
+        self.conv = nn.ConvTranspose2d(inputChannels, outputChannels, kernel_size=kernelSize,
+                                       stride=stride, padding=padding, output_padding=outPadding, dilation=dilation, groups=groups, bias=convBias)
+
         self.conv.apply(weights_init())
 
         if bn:
             self.bn = nn.BatchNorm2d(bnChannels)
-        
+
         if activ == 'leaky':
             self.activ = nn.LeakyReLU(0.2, False)
         elif activ == 'relu':
@@ -374,20 +391,19 @@ class ReverseAttention(nn.Module):
             pass
         # pdb.set_trace()
 
-
     def forward(self, ecFeaturesSkip, dcFeatures, maskFeaturesForAttention):
         # pdb.set_trace()
 
         nextDcFeatures = self.conv(dcFeatures)
         # (Pdb) nextDcFeatures.size()
         # torch.Size([1, 512, 16, 16])
-        
-        # note that encoder features are ahead, it's important tor make forward attention map ahead 
+
+        # note that encoder features are ahead, it's important tor make forward attention map ahead
         # of reverse attention map when concatenate, we do it in the LBAM model forward function
         concatFeatures = torch.cat((ecFeaturesSkip, nextDcFeatures), 1)
         # (Pdb) concatFeatures.size()
         # torch.Size([1, 1024, 16, 16])
-        
+
         outputFeatures = concatFeatures * maskFeaturesForAttention
 
         if hasattr(self, 'bn'):
@@ -402,6 +418,7 @@ class ReverseAttention(nn.Module):
         # torch.Size([1, 1024, 16, 16])
 
         return outputFeatures
+
 
 class DiscriminatorDoubleColumn(nn.Module):
     def __init__(self, inputChannels):
@@ -421,16 +438,16 @@ class DiscriminatorDoubleColumn(nn.Module):
 
             nn.Conv2d(256, 512, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(512),
-            nn.LeakyReLU(0.2 , inplace=True),
-
-            nn.Conv2d(512, 512, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(512),
             nn.LeakyReLU(0.2, inplace=True),
 
             nn.Conv2d(512, 512, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(512),
             nn.LeakyReLU(0.2, inplace=True),
-            
+
+            nn.Conv2d(512, 512, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(512),
+            nn.LeakyReLU(0.2, inplace=True),
+
         )
 
         self.localConv = nn.Sequential(
@@ -447,7 +464,7 @@ class DiscriminatorDoubleColumn(nn.Module):
 
             nn.Conv2d(256, 512, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(512),
-            nn.LeakyReLU(0.2 , inplace=True),
+            nn.LeakyReLU(0.2, inplace=True),
 
             nn.Conv2d(512, 512, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(512),
@@ -461,7 +478,7 @@ class DiscriminatorDoubleColumn(nn.Module):
 
         self.globalConv.apply(weights_init())
         self.localConv.apply(weights_init())
-        
+
         self.fusionLayer = nn.Sequential(
             nn.Conv2d(1024, 1, kernel_size=4),
             nn.Sigmoid()
@@ -482,10 +499,11 @@ def gradient_penalty(netD, real_data, fake_data, masks):
     BATCH_SIZE = real_data.size()[0]
     DIM = real_data.size()[2]
     alpha = torch.rand(BATCH_SIZE, 1)
-    alpha = alpha.expand(BATCH_SIZE, int(real_data.nelement()/BATCH_SIZE)).contiguous()
+    alpha = alpha.expand(BATCH_SIZE, int(
+        real_data.nelement()/BATCH_SIZE)).contiguous()
     alpha = alpha.view(BATCH_SIZE, 3, DIM, DIM)
     alpha = alpha.cuda()
-    
+
     fake_data = fake_data.view(BATCH_SIZE, 3, DIM, DIM)
     interpolates = alpha * real_data.detach() + ((1 - alpha) * fake_data.detach())
     interpolates = interpolates.cuda()
@@ -494,11 +512,12 @@ def gradient_penalty(netD, real_data, fake_data, masks):
     disc_interpolates = netD(interpolates, masks)
 
     gradients = autograd.grad(outputs=disc_interpolates, inputs=interpolates,
-                              grad_outputs=torch.ones(disc_interpolates.size()).cuda(),
+                              grad_outputs=torch.ones(
+                                  disc_interpolates.size()).cuda(),
                               create_graph=True, retain_graph=True, only_inputs=True)[0]
 
     gradients = gradients.view(gradients.size(0), -1)
-    Lambda = 10.0                              
+    Lambda = 10.0
     gradient_penalty_x = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * Lambda
 
     # pdb.set_trace()
@@ -515,7 +534,9 @@ def gram_matrix(feat):
 
     return gram
 
-#VGG16 feature extract
+# VGG16 feature extract
+
+
 class VGG16FeatureExtractor(nn.Module):
     def __init__(self):
         super(VGG16FeatureExtractor, self).__init__()
@@ -546,8 +567,8 @@ class ImagePatchDiscriminator(nn.Module):
         self.l1 = nn.L1Loss()
         self.extractor = VGG16FeatureExtractor()
         self.net_D = DiscriminatorDoubleColumn(3)
-        self.optimizer_D = torch.optim.Adam(self.net_D.parameters(), lr=lr, betas=betasInit)
-
+        self.optimizer_D = torch.optim.Adam(
+            self.net_D.parameters(), lr=lr, betas=betasInit)
 
     def forward(self, input, mask, output, gt):
         self.net_D.zero_grad()
@@ -566,7 +587,7 @@ class ImagePatchDiscriminator(nn.Module):
         output_comp = mask * input + (1 - mask) * output
 
         holeLoss = 6 * self.l1((1 - mask) * output, (1 - mask) * gt)
-        validAreaLoss = self.l1(mask * output, mask * gt)   
+        validAreaLoss = self.l1(mask * output, mask * gt)
 
         if output.shape[1] == 3:
             feat_output_comp = self.extractor(output_comp)
@@ -587,14 +608,13 @@ class ImagePatchDiscriminator(nn.Module):
         styleLoss = 0.0
         for i in range(3):
             styleLoss += 120 * self.l1(gram_matrix(feat_output[i]),
-                                          gram_matrix(feat_gt[i]))
+                                       gram_matrix(feat_gt[i]))
             styleLoss += 120 * self.l1(gram_matrix(feat_output_comp[i]),
-                                          gram_matrix(feat_gt[i]))
-        
+                                       gram_matrix(feat_gt[i]))
+
         GLoss = holeLoss + validAreaLoss + prcLoss + styleLoss + 0.1 * D_fake
 
         return GLoss.sum()
-
 
 
 def model_load(model, path):
@@ -616,6 +636,7 @@ def model_save(model, path):
     """Save model."""
     torch.save(model.state_dict(), path)
 
+
 def model_export():
     """Export model to onnx."""
 
@@ -636,15 +657,15 @@ def model_export():
     print("Export model ...")
     # xxxx--modify here
     dummy_input = torch.randn(1, 3, 512, 512)
-    input_names = [ "input" ]
-    output_names = [ "output" ]
+    input_names = ["input"]
+    output_names = ["output"]
     torch.onnx.export(model, dummy_input, onnx_file,
-                    input_names=input_names, 
-                    output_names=output_names,
-                    verbose=True,
-                    opset_version=11,
-                    keep_initializers_as_inputs=True,
-                    export_params=True)
+                      input_names=input_names,
+                      output_names=output_names,
+                      verbose=True,
+                      opset_version=11,
+                      keep_initializers_as_inputs=True,
+                      export_params=True)
 
     # 3. Optimize model
     print('Checking model ...')
@@ -652,7 +673,8 @@ def model_export():
     onnx.checker.check_model(model)
 
     print("Optimizing model ...")
-    passes = ["extract_constant_to_initializer", "eliminate_unused_initializer"]
+    passes = ["extract_constant_to_initializer",
+              "eliminate_unused_initializer"]
     optimized_model = optimizer.optimize(model, passes)
     onnx.save(optimized_model, onnx_file)
 
@@ -710,7 +732,8 @@ def train_epoch(loader, model, optimizer, model_d, device, tag=''):
             new_images, new_masks = image_with_mask(images, masks)
             fake_images = model(new_images, new_masks)
 
-            G_loss = model_d(new_images[:, 0:3, :, :], new_masks, fake_images, GT)
+            G_loss = model_d(new_images[:, 0:3, :, :],
+                             new_masks, fake_images, GT)
             loss = G_loss.sum()
 
             loss_value = loss.item()
@@ -779,7 +802,6 @@ def model_setenv():
     if os.environ.get("DEVICE") != "YES" and os.environ.get("DEVICE") != "NO":
         os.environ["DEVICE"] = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-
     # Is there GPU ?
     if not torch.cuda.is_available():
         os.environ["ONLY_USE_CPU"] = "YES"
@@ -807,6 +829,7 @@ def model_setenv():
     print("  DEVICE: ", os.environ["DEVICE"])
     print("  ONLY_USE_CPU: ", os.environ["ONLY_USE_CPU"])
     print("  ENABLE_APEX: ", os.environ["ENABLE_APEX"])
+
 
 if __name__ == '__main__':
     """Test model ..."""

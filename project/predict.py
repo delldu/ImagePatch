@@ -9,16 +9,18 @@
 # ***
 # ************************************************************************************/
 #
-import os
-import glob
 import argparse
+import glob
+import os
+import pdb
+
 import torch
 import torchvision.transforms as transforms
 from PIL import Image
-from model import get_model, model_load, model_setenv
-from data import image_with_mask
 from tqdm import tqdm
-import pdb
+
+from data import image_with_mask
+from model import get_model, model_load, model_setenv
 
 if __name__ == "__main__":
     """Predict."""
@@ -26,8 +28,10 @@ if __name__ == "__main__":
     model_setenv()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--checkpoint', type=str, default="models/ImagePatch.pth", help="checkpint file")
-    parser.add_argument('--input', type=str, default="dataset/predict/image/*.png", help="input image")
+    parser.add_argument('--checkpoint', type=str,
+                        default="models/ImagePatch.pth", help="checkpint file")
+    parser.add_argument(
+        '--input', type=str, default="dataset/predict/image/*.png", help="input image")
     args = parser.parse_args()
 
     # CPU or GPU ?
@@ -46,7 +50,7 @@ if __name__ == "__main__":
     toimage = transforms.ToPILImage()
 
     image_filenames = glob.glob(args.input)
-    progress_bar = tqdm(total = len(image_filenames))
+    progress_bar = tqdm(total=len(image_filenames))
 
     for index, filename in enumerate(image_filenames):
         progress_bar.update(1)
@@ -61,12 +65,14 @@ if __name__ == "__main__":
         mask_image = Image.open(mask_filename).convert("RGB")
         mask_tensor = totensor(mask_image).unsqueeze(0).to(device)
 
-        new_input_tensor, new_mask_tensor = image_with_mask(input_tensor, mask_tensor)
+        new_input_tensor, new_mask_tensor = image_with_mask(
+            input_tensor, mask_tensor)
 
         # new input
         output_filename = os.path.dirname(os.path.dirname(filename)) \
             + "/output/input_" + os.path.basename(filename)
-        toimage(new_input_tensor.clamp(0, 1.0).squeeze().cpu()).save(output_filename)
+        toimage(new_input_tensor.clamp(
+            0, 1.0).squeeze().cpu()).save(output_filename)
 
         with torch.no_grad():
             output_tensor = model(new_input_tensor, new_mask_tensor)

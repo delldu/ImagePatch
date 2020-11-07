@@ -11,15 +11,17 @@
 #
 
 import os
+import pdb
+
 import torch
-from PIL import Image
 import torch.utils.data as data
 import torchvision.transforms as T
 import torchvision.utils as utils
-import pdb
+from PIL import Image
 
 train_dataset_rootdir = "dataset/train/"
 test_dataset_rootdir = "dataset/test/"
+
 
 def get_transform(train=True):
     """Transform images."""
@@ -32,6 +34,7 @@ def get_transform(train=True):
     ts.append(T.ToTensor())
     return T.Compose(ts)
 
+
 def image_with_mask(image, mask):
     """image, mask: NX3xHxW."""
     threshhold = 0.5
@@ -43,6 +46,7 @@ def image_with_mask(image, mask):
     image = image * mask
     image = torch.cat((image, mask[:, 0:1, :, :]), 1)
     return image, mask
+
 
 class ImagePatchDataset(data.Dataset):
     """Define dataset."""
@@ -81,13 +85,16 @@ class ImagePatchDataset(data.Dataset):
         fmt_str += '    Number of samples: {}\n'.format(self.__len__())
         fmt_str += '    Root Location: {}\n'.format(self.root)
         tmp = '    Transforms: '
-        fmt_str += '{0}{1}\n'.format(tmp, self.transforms.__repr__().replace('\n', '\n' + ' ' * len(tmp)))
+        fmt_str += '{0}{1}\n'.format(
+            tmp, self.transforms.__repr__().replace('\n', '\n' + ' ' * len(tmp)))
         return fmt_str
+
 
 def train_data(bs):
     """Get data loader for trainning & validating, bs means batch_size."""
 
-    train_ds = ImagePatchDataset(train_dataset_rootdir, get_transform(train=True))
+    train_ds = ImagePatchDataset(
+        train_dataset_rootdir, get_transform(train=True))
     print(train_ds)
 
     # Split train_ds in train and valid set
@@ -99,16 +106,21 @@ def train_data(bs):
     train_ds = data.Subset(train_ds, indices)
 
     # Define training and validation data loaders
-    train_dl = data.DataLoader(train_ds, batch_size=bs, shuffle=True, num_workers=4)
-    valid_dl = data.DataLoader(valid_ds, batch_size=bs, shuffle=False, num_workers=4)
+    train_dl = data.DataLoader(
+        train_ds, batch_size=bs, shuffle=True, num_workers=4)
+    valid_dl = data.DataLoader(
+        valid_ds, batch_size=bs, shuffle=False, num_workers=4)
 
     return train_dl, valid_dl
+
 
 def test_data(bs):
     """Get data loader for test, bs means batch_size."""
 
-    test_ds = ImagePatchDataset(test_dataset_rootdir, get_transform(train=False))
-    test_dl = data.DataLoader(test_ds, batch_size=bs, shuffle=False, num_workers=4)
+    test_ds = ImagePatchDataset(
+        test_dataset_rootdir, get_transform(train=False))
+    test_dl = data.DataLoader(test_ds, batch_size=bs,
+                              shuffle=False, num_workers=4)
 
     return test_dl
 
@@ -117,6 +129,7 @@ def get_data(trainning=True, bs=4):
     """Get data loader for trainning & validating, bs means batch_size."""
 
     return train_data(bs) if trainning else test_data(bs)
+
 
 def ImagePatchDatasetTest():
     """Test dataset ..."""
@@ -128,6 +141,7 @@ def ImagePatchDatasetTest():
     # ndarr = grid.mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to('cpu', torch.uint8).numpy()
     # image = Image.fromarray(ndarr)
     # image.show()
+
 
 if __name__ == '__main__':
     ImagePatchDatasetTest()

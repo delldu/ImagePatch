@@ -62,10 +62,16 @@ if __name__ == "__main__":
         mask_tensor = totensor(mask_image).unsqueeze(0).to(device)
 
         new_input_tensor, new_mask_tensor = image_with_mask(input_tensor, mask_tensor)
+
+        # new input
+        output_filename = os.path.dirname(os.path.dirname(filename)) \
+            + "/output/input_" + os.path.basename(filename)
+        toimage(new_input_tensor.clamp(0, 1.0).squeeze().cpu()).save(output_filename)
+
         with torch.no_grad():
             output_tensor = model(new_input_tensor, new_mask_tensor)
 
         output_tensor = output_tensor.clamp(0, 1.0).squeeze()
         output_filename = os.path.dirname(os.path.dirname(filename)) \
-            + "/output/" + os.path.basename(filename)
+            + "/output/output_" + os.path.basename(filename)
         toimage(output_tensor.cpu()).save(output_filename)

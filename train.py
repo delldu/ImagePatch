@@ -88,7 +88,7 @@ count = 1
 G_optimizer = optim.Adam(netG.parameters(), lr=0.0001, betas=(0.5, 0.9))
 
 
-criterion = InpaintingLossWithGAN(args.logPath, VGG16FeatureExtractor(), lr=0.00001, betasInit=(0.0, 0.9), Lamda=10.0)
+criterion = InpaintingLossWithGAN(lr=0.00001, betasInit=(0.0, 0.9))
 
 # pdb.set_trace()
 
@@ -116,7 +116,7 @@ for i in range(1, num_epochs + 1):
         netG.zero_grad()
 
         fake_images = netG(inputImgs, masks)
-        G_loss = criterion(inputImgs[:, 0:3, :, :], masks, fake_images, GT, count, i)
+        G_loss = criterion(inputImgs[:, 0:3, :, :], masks, fake_images, GT)
         G_loss = G_loss.sum()
         G_optimizer.zero_grad()
         G_loss.backward()

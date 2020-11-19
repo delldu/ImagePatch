@@ -27,7 +27,7 @@ def get_transform(train=True):
     """Transform images."""
     ts = []
     if train:
-        loadSize = 512
+        loadSize = 256
         ts.append(T.Resize(size=loadSize, interpolation=Image.BICUBIC))
     #   ts.append(T.RandomHorizontalFlip(0.5))
 

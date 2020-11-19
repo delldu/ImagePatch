@@ -20,12 +20,10 @@ from PIL import Image
 from tqdm import tqdm
 
 from data import image_with_mask
-from model import get_model, model_load, model_setenv
+from model import enable_amp, get_model, model_device, model_load
 
 if __name__ == "__main__":
     """Predict."""
-
-    model_setenv()
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--checkpoint', type=str,
@@ -34,17 +32,13 @@ if __name__ == "__main__":
         '--input', type=str, default="dataset/predict/image/*.png", help="input image")
     args = parser.parse_args()
 
-    # CPU or GPU ?
-    device = torch.device(os.environ["DEVICE"])
-
     model = get_model()
     model_load(model, args.checkpoint)
+    device = model_device()
     model.to(device)
     model.eval()
 
-    if os.environ["ENABLE_APEX"] == "YES":
-        from apex import amp
-        model = amp.initialize(model, opt_level="O1")
+    enable_amp(model)
 
     totensor = transforms.ToTensor()
     toimage = transforms.ToPILImage()

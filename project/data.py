@@ -45,6 +45,12 @@ def image_with_mask(image, mask):
     mask = 1 - mask
     image = image * mask
     image = torch.cat((image, mask[:, 0:1, :, :]), 1)
+    # pdb.set_trace()
+    # (Pdb) image.size()
+    # torch.Size([1, 4, 1024, 1024])
+    # (Pdb) mask.size()
+    # torch.Size([1, 3, 1024, 1024])
+    
     return image, mask
 
 
